@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t myapp:latest .'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'kubectl apply -f kubernetes/deployment.yaml'
+            }
+        }
+    }
+}

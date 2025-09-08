@@ -1,0 +1,17 @@
+stages:
+  
+build
+deploy,
+,
+
+build:
+  stage: build
+  script:
+    
+docker build -t myapp:latest .,
+
+deploy:
+  stage: deploy
+  script:
+    
+kubectl apply -f kubernetes/deployment.yaml
