@@ -1,7 +1,13 @@
 stages:
-  - test,
+  - bulid
+  - test
 
-hello-job:
+bulid-job:
+  stage: bulid
+  script:
+    - echo "Buliding the app..."
+
+test-job:
   stage: test
   script:
-    - echo "Hello GitLab CI/CD"
+    - echo "Running tests..."
