@@ -1,0 +1,54 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+# Build stage
+build-job:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo "Building Docker image..."
+    - docker build -t my-flask-app:latest .
+    - docker save my-flask-app:latest > my-flask-app.tar
+  artifacts:
+    paths:
+      - my-flask-app.tar
+
+docker-tests:
+  stage: test
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""   # avoid TLS issues with dind
+  script:
+    - echo "Loading Docker image..."
+    - docker load < my-flask-app.tar
+    - docker run -d --name test-app my-flask-app:latest
+    # retry until app is ready
+    - echo "Waiting for app to start..."
+    - for i in {1..6}; do
+        docker run --rm --network container:test-app curlimages/curl:latest http://localhost:5000 && break;
+        echo "App not ready yet, retrying... ($i)";
+        sleep 5;
+      done
+    - echo "✅ Flask app is up and running!"
+  after_script:
+    - echo "Collecting logs..."
+    - docker logs test-app > flask_app.log || true
+    - docker rm -f test-app || true
+  artifacts:
+    when: always
+    paths:
+      - flask_app.log
+# Deploy stage (placeholder)
+deploy-job:
+  stage: deploy
+  script:
+    - echo "Deployment step (to be implemented later)"
