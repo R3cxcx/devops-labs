@@ -1,14 +1,28 @@
 pipeline {
     agent any
+
     stages {
         stage('Build') {
             steps {
-                sh 'docker build -t myapp:latest .'
+                sh 'echo "Building Docker image..."'
+                sh 'docker build -t my-flask-app:latest .'
             }
         }
+
+        stage('Test') {
+            steps {
+                sh 'echo "Running container for testing..."'
+                sh 'docker run -d --name test-app -p 5000:5000 my-flask-app:latest'
+                sh 'sleep 5'
+                sh 'curl http://localhost:5000 || (docker logs test-app && exit 1)'
+                sh 'docker stop test-app'
+                sh 'docker rm test-app'
+            }
+        }
+
         stage('Deploy') {
             steps {
-                sh 'kubectl apply -f kubernetes/deployment.yaml'
+                sh 'echo "Deployment step (to be implemented later)"'
             }
         }
     }
