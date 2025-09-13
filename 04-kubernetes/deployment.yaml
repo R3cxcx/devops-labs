@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flask-app
-  labels:
-    app: flask-app
 spec:
   replicas: 1
   selector:
@@ -17,30 +15,16 @@ spec:
       containers:
       - name: flask-app
         image: my-flask-app:latest
-        imagePullPolicy: IfNotPresent  # Use local image if available
         ports:
         - containerPort: 5000
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 3
-          periodSeconds: 5
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 5
-          periodSeconds: 10
-      env:
-       - name: APP_MESSAGE
-         valueFrom:
-           configMapKeyRef:
-           name: flask-config
-           key: APP_MESSAGE
-         env:
-          - name: DB_PASSWORD
-            valueFrom:
-              secretKeyRef:
+        env:
+        - name: APP_MESSAGE
+          valueFrom:
+            configMapKeyRef:
+              name: flask-config
+              key: APP_MESSAGE
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
               name: flask-secret
               key: DB_PASSWORD
