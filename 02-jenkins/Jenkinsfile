@@ -1,41 +1,37 @@
 pipeline {
     agent any
 
+    environment {
+        REGISTRY = "your-dockerhub-username"
+        IMAGE = "my-flask-app"
+        TAG = "latest"
+        KUBECONFIG = credentials('kubeconfig') // store kubeconfig as Jenkins credential
+    }
+
     stages {
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                echo Building Docker image...
-                docker build -t my-flask-app:latest ./03-docker
-                '''
+                sh "docker build -t $REGISTRY/$IMAGE:$TAG ."
             }
         }
 
-        stage('Test') {
+        stage('Push Image to DockerHub') {
             steps {
-                sh '''
-                echo Running container for testing...
-                docker rm -f test-app || true
-                docker run -d --name test-app --network jenkins-net -p 5000:5000 my-flask-app:latest
-                sleep 5
-                curl http://test-app:5000
-                '''
+                withDockerRegistry([ credentialsId: 'dockerhub-creds', url: '' ]) {
+                    sh "docker push $REGISTRY/$IMAGE:$TAG"
+                }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                echo Deploying Flask app...
-                # Stop and remove test container if still running
-                docker rm -f test-app || true
-
-                # Remove old production container
-                docker rm -f flask-app || true
-
-                # Run production container
-                docker run -d --name flask-app -p 5000:5000 my-flask-app:latest
-                '''
+                withEnv(["KUBECONFIG=$KUBECONFIG"]) {
+                    sh """
+                    kubectl apply -f 04-kubernetes/deployment.yaml
+                    kubectl apply -f 04-kubernetes/service.yaml
+                    kubectl apply -f 04-kubernetes/ingress.yaml
+                    """
+                }
             }
         }
     }
