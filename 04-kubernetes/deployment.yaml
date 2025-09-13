@@ -32,3 +32,15 @@ spec:
             port: 5000
           initialDelaySeconds: 5
           periodSeconds: 10
+      env:
+       - name: APP_MESSAGE
+         valueFrom:
+           configMapKeyRef:
+           name: flask-config
+           key: APP_MESSAGE
+         env:
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+              name: flask-secret
+              key: DB_PASSWORD
