@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flask-app
+  labels:
+    app: flask-app
 spec:
   replicas: 1
   selector:
@@ -15,8 +17,21 @@ spec:
       containers:
       - name: flask-app
         image: my-flask-app:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
         env:
         - name: APP_MESSAGE
           valueFrom:
