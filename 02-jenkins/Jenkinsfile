@@ -4,32 +4,32 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'echo Building Docker image...'
-                sh 'docker build -t my-flask-app:latest ./03-docker'
+                sh '''
+                    echo "Building Docker image..."
+                    docker build -t my-flask-app:latest ./03-docker
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                sh 'echo Running container for testing...'
-                sh 'docker rm -f test-app || true'
-                sh 'docker run -d --name test-app --network jenkins-net my-flask-app:latest'
-                sh 'sleep 5'
-                sh 'docker logs test-app'
-                sh 'curl http://test-app:5000'
+                sh '''
+                    echo "Running container for testing..."
+                    docker rm -f test-app || true
+                    docker run -d --name test-app --network jenkins-net my-flask-app:latest
+                    sleep 5
+                    docker logs test-app
+                    curl http://test-app:5000
+                '''
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'echo Deploying to Kubernetes...'
-                // Delete old deployment if exists
-                sh 'kubectl delete -f 04-kubernetes/deployment.yaml || true'
-                sh 'kubectl delete -f 04-kubernetes/service.yaml || true'
-
-                // Apply new deployment & service
-                sh 'kubectl apply -f 04-kubernetes/deployment.yaml'
-                sh 'kubectl apply -f 04-kubernetes/service.yaml'
+                sh '''
+                    echo "Deploying to Kubernetes..."
+                    kubectl set image deployment/flask-app flask-app=my-flask-app:latest --record
+                '''
             }
         }
     }
