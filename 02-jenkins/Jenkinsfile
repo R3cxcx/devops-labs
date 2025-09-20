@@ -13,9 +13,10 @@ pipeline {
             steps {
                 sh 'echo Running container for testing...'
                 sh 'docker rm -f test-app || true'
-                sh 'docker run -d --name test-app --network jenkins-net -p 5000:5000 my-flask-app:latest'
+                sh 'docker run -d --name test-app --network jenkins-net my-flask-app:latest'
                 sh 'sleep 5'
-                sh 'curl http://localhost:5000'
+                sh 'docker logs test-app'
+                sh 'curl http://test-app:5000'
             }
         }
 
